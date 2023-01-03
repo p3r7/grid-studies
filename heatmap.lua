@@ -21,6 +21,7 @@ local HEATMAP_FPS = 10
 local g
 
 -- local heatmap = {}
+pressed_btns = {}
 vgrid = {}
 heatmap = {}
 
@@ -53,11 +54,18 @@ local function are_equal_coords(l, r)
   return false
 end
 
-local function has_coord(coords, search)
-  for _, coord in ipairs(coords) do
+local function coord_list_id(coords, search)
+  for i, coord in ipairs(coords) do
     if are_equal_coords(coord, search) then
-      return true
+      return i
     end
+  end
+end
+
+local function has_coord(coords, search)
+  local i = coord_list_id(coords, search)
+  if i ~= nil then
+    return true
   end
   return false
 end
@@ -137,6 +145,15 @@ end
 
 local function grid_key(x, y, z)
   vgrid[x][y] = z
+
+  if z == 0 then
+    local i = coord_list_id(pressed_btns, {x, y})
+    if i ~= nil then
+      table.remove(pressed_btns, i)
+    end
+  else
+    table.insert(pressed_btns, {x, y})
+  end
 end
 
 local function cool_button(x, y, v)
@@ -174,12 +191,19 @@ end
 
 local function heatmap_loop()
   -- print("---------------")
+
+  for _, btn in ipairs(pressed_btns) do
+    local x = btn[1]
+    local y = btn[2]
+    heat_button(x, y, HEAT_INC, {{x, y}})
+  end
+
   for x=1, g.cols do
     for y=1, g.rows do
       if vgrid[x][y] == 0 then
         cool_button(x, y, HEAT_DEC)
-      else
-        heat_button(x, y, HEAT_INC, {{x, y}})
+        -- else
+        -- heat_button(x, y, HEAT_INC, {{x, y}})
       end
     end
   end
